@@ -1,0 +1,36 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+    - 'workouts/**.csv'
+
+jobs:
+  build:
+    name: Gist Box
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Ruby 2.7.x
+      uses: actions/setup-ruby@v1
+      with:
+        ruby-version: 2.7.x
+    - name: Cache gems
+      uses: actions/cache@v1.1.2
+      with:
+        path: vendor/bundle
+        key: ${{ runner.os }}-gem-${{ hashFiles('**/Gemfile.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-gem-
+    - name: Install gems
+      run: |
+        gem install octokit
+    - name: Run script to update gist 
+      env:
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        GIST_ID: ${{ secrets.GIST_ID }}
+      run: |
+        ruby .github/scripts/hadge.rb -t $GH_TOKEN -g $GIST_ID workouts/2021.csv
